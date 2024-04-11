@@ -158,8 +158,6 @@ def calculate_joint_angle(landmarks, joint1, joint2, joint3):
     joint2_coords = get_joint_loc(landmarks, joint2)
     joint3_coords = get_joint_loc(landmarks, joint3)
 
-    #Find the center joint to project the angle onto
-    location = joint2_coords 
     # Calculate angle
     angle = calculate_angle(joint1_coords, joint2_coords, joint3_coords)
 
@@ -218,6 +216,8 @@ def process_frame(image):
         r_knee_ang = calculate_joint_angle(landmarks, "RIGHT_HIP", "RIGHT_KNEE", "RIGHT_ANKLE")
         l_ankle_ang = calculate_joint_angle(landmarks, "LEFT_KNEE", "LEFT_ANKLE", "LEFT_FOOT_INDEX")
         r_anke_ang = calculate_joint_angle(landmarks, "RIGHT_KNEE", "RIGHT_ANKLE", "RIGHT_FOOT_INDEX")
+        l_armpit_ang = calculate_joint_angle(landmarks, "LEFT_ELBOW", "LEFT_SHOULDER", "LEFT_HIP")
+        r_armpit_ang = calculate_joint_angle(landmarks, "RIGHT_ELBOW", "RIGHT_SHOULDER", "RIGHT_HIP")
 
         l_eblow_pos = get_joint_loc(landmarks, "LEFT_ELBOW")
         r_elbow_pos = get_joint_loc(landmarks, "RIGHT_ELBOW")
@@ -227,7 +227,8 @@ def process_frame(image):
         r_knee_pos = get_joint_loc(landmarks, "RIGHT_KNEE")
         l_ankle_pos = get_joint_loc(landmarks, "LEFT_ANKLE")
         r_ankle_pos = get_joint_loc(landmarks, "RIGHT_ANKLE")
-        
+        l_armpit_pos = get_joint_loc(landmarks, "LEFT_SHOULDER")
+        r_armpit_pos = get_joint_loc(landmarks, "RIGHT_SHOULDER")
 
         #Calculate centre of mass
         com = calc_centre_of_mass(landmarks)
@@ -300,6 +301,24 @@ def process_frame(image):
             height=height
         )
 
+        visualize_point(
+            image=image,
+            angle=l_armpit_ang,
+            loc=l_armpit_pos,
+            #label="L Arm",
+            width=width,
+            height=height
+        )
+
+        visualize_point(
+            image=image,
+            angle=r_armpit_ang,
+            loc=r_armpit_pos,
+            #label="R Arm",
+            width=width,
+            height=height
+        )
+
         #Visualise centre of mass
         visualize_point(
             image=image, 
@@ -312,8 +331,6 @@ def process_frame(image):
             )
         
 
-        print(com)
-
     except Exception as e:
         print(f"Error: {e}")
         # pass
@@ -323,6 +340,7 @@ def process_frame(image):
                             mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2) 
                                 )          
 
+    
     cv2.imshow('Mediapipe Feed', image)     
         
 
