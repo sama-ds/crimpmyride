@@ -104,30 +104,51 @@
                 return poseData.reduce((prev, curr) => Math.abs(curr.timestamp - time) < Math.abs(prev.timestamp - time) ? curr : prev);
             }
 
-            function drawPose(pose) {
-                // Example drawing: draw circles for all joints
-                const joints = [
-                    'left_shoulder', 'right_shoulder', 
-                    'left_elbow', 'right_elbow', 
-                    'left_hip', 'right_hip', 
-                    'left_knee', 'right_knee', 
-                    'left_ankle', 'right_ankle', 
-                    'left_armpit', 'right_armpit'
-                ];
-
+            function drawJoints(joints) {
                 ctx.fillStyle = 'red';
-                joints.forEach(joint => {
-                    const x = pose[joint].x * canvas.width;
-                    const y = pose[joint].y * canvas.height;
+                for (const jointName in joints) {
+                    const joint = joints[jointName];
+                    const x = joint['x'] * canvas.width;
+                    const y = joint['y'] * canvas.height;
                     drawPoint(x, y);
-                });
+                }
             }
+
+            function drawConnections(joints, lines) {
+                ctx.strokeStyle = 'blue';
+                ctx.lineWidth = 2;
+                for (const line of lines) {
+                    const startJoint = joints[line['start']];
+                    const endJoint = joints[line['end']];
+                    const startX = startJoint['x'] * canvas.width;
+                    const startY = startJoint['y'] * canvas.height;
+                    const endX = endJoint['x'] * canvas.width;
+                    const endY = endJoint['y'] * canvas.height;
+                    drawLine(startX, startY, endX, endY);
+                }
+            }
+
+            function drawPose(pose) {
+                const joints = pose['joints'];
+                const lines = pose['lines'];
+                drawJoints(joints);
+                drawConnections(joints, lines);
+            }
+
 
             function drawPoint(x, y) {
                 ctx.beginPath();
                 ctx.arc(x, y, 5, 0, 2 * Math.PI);
                 ctx.fill();
             }
+
+            function drawLine(x1, y1, x2, y2) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+
 
             // Initial resize to match video dimensions
             resizeCanvas();

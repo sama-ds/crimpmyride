@@ -57,75 +57,58 @@ def process_video(video_path):
 
             if results.pose_landmarks:
                 # Extract coordinates
-                joints = {
+                joints = extract_joints(results.pose_landmarks)
+                lines = extract_lines(joints)
+                frame_data = {
                     'timestamp': cap.get(cv2.CAP_PROP_POS_MSEC),
                     'frame': frame_idx,
-                    'left_shoulder': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].z,
-                    },
-                    'right_shoulder': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].z,
-                    },
-                    'left_elbow': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ELBOW].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ELBOW].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ELBOW].z,
-                    },
-                    'right_elbow': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ELBOW].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ELBOW].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ELBOW].z,
-                    },
-                    'left_hip': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP].z,
-                    },
-                    'right_hip': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP].z,
-                    },
-                    'left_knee': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_KNEE].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_KNEE].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_KNEE].z,
-                    },
-                    'right_knee': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_KNEE].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_KNEE].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_KNEE].z,
-                    },
-                    'left_ankle': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ANKLE].z,
-                    },
-                    'right_ankle': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ANKLE].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ANKLE].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ANKLE].z,
-                    },
-                    'left_armpit': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER].z,
-                    },
-                    'right_armpit': {
-                        'x': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].x,
-                        'y': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].y,
-                        'z': results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER].z,
-                    }
+                    'joints': joints,
+                    'lines': lines
                 }
+                results_data.append(frame_data)
 
-                results_data.append(joints)
             frame_idx += 1
 
-        return results_data
+    return results_data
+
+def extract_joints(landmarks):
+    joints = {
+        'left_shoulder': extract_joint_loc(landmarks, mp_pose.PoseLandmark.LEFT_SHOULDER),
+        'right_shoulder': extract_joint_loc(landmarks, mp_pose.PoseLandmark.RIGHT_SHOULDER),
+        'left_elbow': extract_joint_loc(landmarks, mp_pose.PoseLandmark.LEFT_ELBOW),
+        'right_elbow': extract_joint_loc(landmarks, mp_pose.PoseLandmark.RIGHT_ELBOW),
+        'left_wrist': extract_joint_loc(landmarks, mp_pose.PoseLandmark.LEFT_WRIST),
+        'right_wrist': extract_joint_loc(landmarks, mp_pose.PoseLandmark.RIGHT_WRIST),
+        'left_hip': extract_joint_loc(landmarks, mp_pose.PoseLandmark.LEFT_HIP),
+        'right_hip': extract_joint_loc(landmarks, mp_pose.PoseLandmark.RIGHT_HIP),
+        'left_knee': extract_joint_loc(landmarks, mp_pose.PoseLandmark.LEFT_KNEE),
+        'right_knee': extract_joint_loc(landmarks, mp_pose.PoseLandmark.RIGHT_KNEE),
+        'left_ankle': extract_joint_loc(landmarks, mp_pose.PoseLandmark.LEFT_ANKLE),
+        'right_ankle': extract_joint_loc(landmarks, mp_pose.PoseLandmark.RIGHT_ANKLE)
+    }
+    return joints
+
+def extract_joint_loc(landmarks, landmark):
+    return {'x': landmarks.landmark[landmark].x,
+            'y': landmarks.landmark[landmark].y,
+            'z': landmarks.landmark[landmark].z}
+
+def extract_lines(joints):
+    lines = [
+        {'start': 'left_wrist', 'end': 'left_elbow'},
+        {'start': 'left_elbow', 'end': 'left_shoulder'},
+        {'start': 'left_shoulder', 'end': 'left_hip'},
+        {'start': 'left_hip', 'end': 'left_knee'},
+        {'start': 'left_knee', 'end': 'left_ankle'},
+        {'start': 'right_wrist', 'end': 'right_elbow'},
+        {'start': 'right_elbow', 'end': 'right_shoulder'},
+        {'start': 'right_shoulder', 'end': 'right_hip'},
+        {'start': 'right_hip', 'end': 'right_knee'},
+        {'start': 'right_knee', 'end': 'right_ankle'},
+        {'start': 'left_shoulder', 'end': 'right_shoulder'},
+        {'start': 'left_hip', 'end': 'right_hip'},
+    ]
+    return lines
 
 @app.route('/display/<filename>/<data_filename>')
 def display_video(filename, data_filename):
@@ -138,6 +121,40 @@ def uploaded_file(filename):
 @app.route('/json/<filename>')
 def get_json(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# Flask route for fetching frame data
+@app.route('/frame_data/<int:frame_index>')
+def get_frame_data(frame_index):
+    # Process the video frame at the specified index and return the frame data as JSON
+    frame_data = process_video_frame(frame_index)
+    return jsonify(frame_data)
+
+// JavaScript code to handle mouse events and AJAX requests
+document.addEventListener('DOMContentLoaded', function() {
+    var videoPlayer = document.getElementById('video-player');
+    var progressBar = document.getElementById('progress-bar');
+
+    // Event listener for mouse click on the progress bar
+    progressBar.addEventListener('click', function(event) {
+        var percentClicked = event.offsetX / progressBar.offsetWidth;
+        var frameIndex = Math.floor(percentClicked * videoPlayer.duration * videoPlayer.framerate);
+        seekFrame(frameIndex);
+    });
+
+    function seekFrame(frameIndex) {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                var frameData = JSON.parse(xhr.responseText);
+                // Update the video player with the received frame data
+                // For example, set the current frame and draw joints/connections
+            }
+        };
+        xhr.open('GET', '/frame_data/' + frameIndex);
+        xhr.send();
+    }
+});
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1')

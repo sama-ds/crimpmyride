@@ -1,0 +1,16 @@
+<!-- HTML template for displaying the video player -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player</title>
+</head>
+<body>
+    <video id="video-player" controls preload="metadata">
+        <source src="{{ url_for('uploaded_file', filename=video_filename) }}" type="video/mp4">
+    </video>
+    <div id="progress-bar"></div>
+    <script src="{{ url_for('static', filename='js/video_player.js') }}"></script>
+</body>
+</html>
