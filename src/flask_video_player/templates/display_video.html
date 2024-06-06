@@ -11,6 +11,7 @@
         }
         h1 {
             color: #333;
+            text-align: center;
         }
         .video-container {
             max-width: 800px;
@@ -19,28 +20,31 @@
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
+            border: 5px solid blue;
         }
-        video {
+        .video-wrapper {
             position: relative;
-            width: 100%;
-            height: auto;
-            border: 5px solid yellow;
-            z-index: 1;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
         }
-        canvas {
+        video, canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+        }
+        video {
+            border: 5px solid yellow;
+            z-index: 1;
+        }
+        canvas {
             pointer-events: none;
             border: 5px solid green;
             z-index: 2;
         }
         #frame-progress-container {
-            position: relative;
+            margin-top: 20px;
             width: 100%;
-            margin-top: 10px;
         }
         #frame-progress {
             width: 100%;
@@ -50,7 +54,6 @@
             background: #ddd;
             outline: none;
             opacity: 0.7;
-            -webkit-transition: .2s;
             transition: opacity .2s;
         }
         #frame-progress::-webkit-slider-thumb {
@@ -72,14 +75,16 @@
 <body>
     <div class="video-container">
         <h1>Processed Video Display</h1>
-        <video id="video" controls>
-            <source src="{{ url_for('uploaded_file', filename=video_filename) }}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <canvas id="overlay"></canvas>
-    </div>
-    <div id="frame-progress-container">
-        <input type="range" id="frame-progress" min="0" value="0">
+        <div class="video-wrapper">
+            <video id="video" controls>
+                <source src="{{ url_for('uploaded_file', filename=video_filename) }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <canvas id="overlay"></canvas>
+        </div>
+        <div id="frame-progress-container">
+            <input type="range" id="frame-progress" min="0" value="0">
+        </div>
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -120,13 +125,15 @@
             window.addEventListener('resize', resizeCanvas);
 
             function draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const currentTime = video.currentTime * 1000; // Current time in milliseconds
-                const currentFrameData = getPoseDataForTime(currentTime);
-                if (currentFrameData) {
-                    drawPose(currentFrameData);
+                if (!video.paused && !video.ended) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const currentTime = video.currentTime * 1000; // Current time in milliseconds
+                    const currentFrameData = getPoseDataForTime(currentTime);
+                    if (currentFrameData) {
+                        drawPose(currentFrameData);
+                    }
+                    requestAnimationFrame(draw);
                 }
-                requestAnimationFrame(draw);
             }
 
             function getPoseDataForTime(time) {
@@ -163,7 +170,6 @@
             }
 
             function drawPose(pose) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before drawing
                 const joints = pose['joints'];
                 const lines = pose['lines'];
                 drawJoints(joints);
@@ -184,6 +190,7 @@
             }
 
             function updatePose() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const currentTime = video.currentTime * 1000; // Current time in milliseconds
                 const currentFrameData = getPoseDataForTime(currentTime);
                 if (currentFrameData) {
@@ -201,7 +208,7 @@
                 if (frameData) {
                     const timeInSeconds = frameData.timestamp / 1000;
                     video.currentTime = timeInSeconds;
-                    drawPose(frameData);
+                    updatePose();
                 }
             });
 
