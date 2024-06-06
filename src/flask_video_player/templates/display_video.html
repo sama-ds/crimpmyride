@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Watch Processed Video</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        .video-container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;  /* Relative positioning for parent container */
+            border: 5px solid blue;
+            height: 0;  /* Ensure the container does not affect the layout */
+        }
+        video {
+            position: absolute;
+            top: 20px;  /* Adjust based on the title height */
+            left: 20px;  /* Align with the padding of the container */
+            width: calc(100% - 40px);  /* Adjust based on the padding */
+            height: auto;
+            border: 5px solid yellow;
+            z-index: 1;  /* Ensure the video is behind the canvas */
+        }
+        canvas {
+            position: absolute;
+            top: 20px;  /* Same as video */
+            left: 20px;  /* Same as video */
+            width: calc(100% - 40px);  /* Same as video */
+            height: auto;
+            pointer-events: none;  /* Ensure canvas does not interfere with video controls */
+            border: 5px solid green;
+            z-index: 2;  /* Ensure the canvas is on top of the video */
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <h1>Processed Video Display</h1>
+        <video id="video" controls>
+            <source src="{{ url_for('uploaded_file', filename=video_filename) }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <canvas id="overlay"></canvas>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('overlay');
+            const ctx = canvas.getContext('2d');
+            const dataFilename = "{{ url_for('get_json', filename=data_filename) }}";
+
+            let poseData = [];
+
+            // Fetch the pose data JSON
+            fetch(dataFilename)
+                .then(response => response.json())
+                .then(data => {
+                    poseData = data;
+                })
+                .catch(error => {
+                    console.error('Error fetching pose data:', error);
+                });
+
+            // Function to resize and position the canvas to match the video dimensions
+            function resizeCanvas() {
+                const rect = video.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                console.log('Video dimensions:', rect.width, rect.height);
+                console.log('Canvas dimensions:', canvas.width, canvas.height);
+            }
+
+            // Resize canvas when video metadata is loaded and when the window is resized
+            video.addEventListener('loadedmetadata', resizeCanvas);
+            window.addEventListener('resize', resizeCanvas);
+
+            video.addEventListener('play', () => {
+                draw();
+            });
+
+            function draw() {
+                if (video.paused || video.ended) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const currentTime = video.currentTime * 1000;  // Current time in milliseconds
+                const currentFrameData = getPoseDataForTime(currentTime);
+                if (currentFrameData) {
+                    drawPose(currentFrameData);
+                }
+                requestAnimationFrame(draw);
+            }
+
+            function getPoseDataForTime(time) {
+                // Find the frame data closest to the current video time
+                return poseData.reduce((prev, curr) => Math.abs(curr.timestamp - time) < Math.abs(prev.timestamp - time) ? curr : prev);
+            }
+
+            function drawPose(pose) {
+                // Example drawing: draw circles for all joints
+                const joints = [
+                    'left_shoulder', 'right_shoulder', 
+                    'left_elbow', 'right_elbow', 
+                    'left_hip', 'right_hip', 
+                    'left_knee', 'right_knee', 
+                    'left_ankle', 'right_ankle', 
+                    'left_armpit', 'right_armpit'
+                ];
+
+                ctx.fillStyle = 'red';
+                joints.forEach(joint => {
+                    const x = pose[joint].x * canvas.width;
+                    const y = pose[joint].y * canvas.height;
+                    drawPoint(x, y);
+                });
+            }
+
+            function drawPoint(x, y) {
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            // Initial resize to match video dimensions
+            resizeCanvas();
+        });
+    </script>
+</body>
+</html>
