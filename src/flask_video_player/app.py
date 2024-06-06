@@ -122,39 +122,5 @@ def uploaded_file(filename):
 def get_json(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# Flask route for fetching frame data
-@app.route('/frame_data/<int:frame_index>')
-def get_frame_data(frame_index):
-    # Process the video frame at the specified index and return the frame data as JSON
-    frame_data = process_video_frame(frame_index)
-    return jsonify(frame_data)
-
-// JavaScript code to handle mouse events and AJAX requests
-document.addEventListener('DOMContentLoaded', function() {
-    var videoPlayer = document.getElementById('video-player');
-    var progressBar = document.getElementById('progress-bar');
-
-    // Event listener for mouse click on the progress bar
-    progressBar.addEventListener('click', function(event) {
-        var percentClicked = event.offsetX / progressBar.offsetWidth;
-        var frameIndex = Math.floor(percentClicked * videoPlayer.duration * videoPlayer.framerate);
-        seekFrame(frameIndex);
-    });
-
-    function seekFrame(frameIndex) {
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                var frameData = JSON.parse(xhr.responseText);
-                // Update the video player with the received frame data
-                // For example, set the current frame and draw joints/connections
-            }
-        };
-        xhr.open('GET', '/frame_data/' + frameIndex);
-        xhr.send();
-    }
-});
-
-
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1')
