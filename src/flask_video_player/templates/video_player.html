@@ -1,16 +1,43 @@
-<!-- HTML template for displaying the video player -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Player</title>
+    <style>
+        /* Add your CSS styles here */
+    </style>
 </head>
 <body>
     <video id="video-player" controls preload="metadata">
         <source src="{{ url_for('uploaded_file', filename=video_filename) }}" type="video/mp4">
     </video>
     <div id="progress-bar"></div>
-    <script src="{{ url_for('static', filename='js/video_player.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var videoPlayer = document.getElementById('video-player');
+            var progressBar = document.getElementById('progress-bar');
+
+            // Event listener for mouse click on the progress bar
+            progressBar.addEventListener('click', function(event) {
+                var percentClicked = event.offsetX / progressBar.offsetWidth;
+                var frameIndex = Math.floor(percentClicked * videoPlayer.duration * videoPlayer.framerate);
+                seekFrame(frameIndex);
+            });
+
+            function seekFrame(frameIndex) {
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        var frameData = JSON.parse(xhr.responseText);
+                        // Update the video player with the received frame data
+                        // For example, set the current frame and draw joints/connections
+                    }
+                };
+                xhr.open('GET', '/frame_data/' + frameIndex);
+                xhr.send();
+            }
+        });
+    </script>
 </body>
 </html>

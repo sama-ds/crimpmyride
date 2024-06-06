@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 import os
 from werkzeug.utils import secure_filename
 import cv2
@@ -71,6 +71,41 @@ def process_video(video_path):
 
     return results_data
 
+def process_video_frame(frame_index):
+    """Extract shoulder data from the video frame at the specified index."""
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        return {"error": "Could not open video"}
+
+    with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)  # Seek to the specified frame index
+        success, frame = cap.read()
+        if not success:
+            return {"error": "Could not read frame"}
+
+        # Convert the BGR image to RGB.
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image.flags.writeable = False
+
+        # Process the image and find the pose
+        results = pose.process(image)
+
+        if results.pose_landmarks:
+            # Extract coordinates
+            joints = extract_joints(results.pose_landmarks)
+            lines = extract_lines(joints)
+            frame_data = {
+                'frame': frame_index,
+                'joints': joints,
+                'lines': lines
+            }
+            return frame_data
+        else:
+            return {"error": "No pose landmarks found"}
+
+    cap.release()
+
+
 def extract_joints(landmarks):
     joints = {
         'left_shoulder': extract_joint_loc(landmarks, mp_pose.PoseLandmark.LEFT_SHOULDER),
@@ -121,6 +156,18 @@ def uploaded_file(filename):
 @app.route('/json/<filename>')
 def get_json(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# Update your Flask route to render the HTML template
+@app.route('/display_processed_video/<filename>/<data_filename>')
+def display_processed_video(filename, data_filename):
+    return render_template('processed_video.html', video_filename=filename, data_filename=data_filename)
+
+# Flask route for fetching frame data
+@app.route('/frame_data/<int:frame_index>')
+def get_frame_data(frame_index):
+    # Process the video frame at the specified index and return the frame data as JSON
+    frame_data = process_video_frame(frame_index)
+    return jsonify(frame_data)
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1')
