@@ -4,6 +4,7 @@ cffi==1.16.0
 contourpy==1.2.0
 cycler==0.12.1
 filelock==3.13.1
+flask
 flatbuffers==24.3.6
 fonttools==4.49.0
 fsspec==2024.2.0
