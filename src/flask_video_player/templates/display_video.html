@@ -15,7 +15,7 @@
             text-align: center;
         }
         .video-container {
-            position: relative; /* Make container relative for absolute positioning inside */
+            position: relative;
             max-width: 800px;
             margin: auto;
             background: white;
@@ -25,7 +25,7 @@
         }
         .video-wrapper {
             position: relative;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            padding-top: 56.25%;
         }
         video, canvas {
             position: absolute;
@@ -44,37 +44,36 @@
             z-index: 2;
         }
         #model-box {
-            width: 300px; /* Adjust width as needed */
-            height: 100%; /* Match canvas height */
+            width: 300px;
+            height: 100%;
             position: absolute;
             top: 0;
-            left: calc(100% + 20px); /* Position to the right of the video container */
-            border: 5px solid red; /* Red border */
-            z-index: 5; /* Ensure it's above other elements */
+            left: calc(100% + 20px);
+            border: 5px solid red;
+            z-index: 5;
         }
         #model-canvas {
-            /* Styles for the canvas */
             width: 100%;
             height: 100%;
             position: relative;
         }
         #z-box {
-            width: 300px; /* Adjust width as needed */
-            height: 100%; /* Match canvas height */
+            width: 300px;
+            height: 100%;
             position: absolute;
             top: 0;
-            right: calc(100% + 20px); /* Position to the left of the video container */
-            border: 5px solid orange; /* Orange border */
-            z-index: 3; /* Ensure it's above other elements */
+            right: calc(100% + 20px);
+            border: 5px solid orange;
+            z-index: 3;
         }
         #graph-box {
-            width: 100%; /* Adjust width as needed */
-            height: 300px; /* Match canvas height */
+            width: 100%;
+            height: 300px;
             position: absolute;
             top: calc(100% + 20px);
-            left: 0; 
-            border: 5px solid purple; /* purple border */
-            z-index: 4; /* Ensure it's above other elements */
+            left: 0;
+            border: 5px solid purple;
+            z-index: 4;
         }
         #frame-progress-container {
             margin-top: 20px;
@@ -104,7 +103,6 @@
             background: #4CAF50;
             cursor: pointer;
         }
-        
     </style>
 </head>
 <body>
@@ -135,6 +133,7 @@
             const ctx = canvas.getContext('2d');
             const dataFilename = "{{ url_for('get_json', filename=data_filename) }}";
             const frameProgress = document.getElementById('frame-progress');
+            const plotlyGraph = document.getElementById('plotly-graph');
 
             let poseData = [];
             let frameCount = 0;
@@ -147,6 +146,7 @@
                     poseData = data;
                     frameCount = data.length;
                     frameProgress.max = frameCount - 1;
+                    initializePlot();
                 })
                 .catch(error => {
                     console.error('Error fetching pose data:', error);
@@ -231,27 +231,46 @@
                 ctx.stroke();
             }
 
+            function initializePlot() {
+                const initialPoseData = getPoseDataForFrame(0);
+                const initialPlotlyData = prepare3DData(initialPoseData);
+
+                const layout = {
+                    title: '3D Pose Visualization',
+                    scene: {
+                        xaxis: { title: 'X-axis' },
+                        yaxis: { title: 'Y-axis' },
+                        zaxis: { title: 'Z-axis' },
+                        camera: {
+                            eye: { x: 1.2, y: 1.2, z: 1.2 },
+                            center: { x: 0, y: 0, z: 0 },
+                            up: { x: 0, y: 0, z: 1 }
+                        }
+                    }
+                };
+
+                Plotly.newPlot(plotlyGraph, initialPlotlyData, layout);
+            }
+
             function updatePose() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const currentTime = video.currentTime * 1000; // Current time in milliseconds
+                const currentTime = video.currentTime * 1000;
                 const currentFrameData = getPoseDataForTime(currentTime);
                 if (currentFrameData) {
                     drawPose(currentFrameData);
-                    // Prepare 3D data for Plotly and update the graph
                     const plotlyData = prepare3DData(currentFrameData);
                     const update = {
-                        x: [plotlyData[0].x], // Update x data
-                        y: [plotlyData[0].y], // Update y data
-                        z: [plotlyData[0].z]  // Update z data
+                        'x': [plotlyData[0].x],
+                        'y': [plotlyData[0].y],
+                        'z': [plotlyData[0].z]
                     };
-                    Plotly.update('plotly-graph', update); // Update the Plotly graph data
+                    Plotly.react(plotlyGraph, update);
                 }
             }
 
             video.addEventListener('timeupdate', updatePose);
             video.addEventListener('seeked', updatePose);
 
-            // Handle frame progress bar
             frameProgress.addEventListener('input', function() {
                 const frameIndex = parseInt(frameProgress.value);
                 const frameData = getPoseDataForFrame(frameIndex);
@@ -262,19 +281,20 @@
                 }
             });
 
-            // Initial resize to match video dimensions
             resizeCanvas();
             requestAnimationFrame(draw);
-
         });
 
-        // Mock function, replace with your actual implementation
         function prepare3DData(poseData) {
-            // Replace this with your actual implementation to generate Plotly data
-            // Example data (replace with your actual data structure)
-            const xData = [1, 2, 3];
-            const yData = [4, 5, 6];
-            const zData = [7, 8, 9];
+            const xData = [];
+            const yData = [];
+            const zData = [];
+
+            for (const joint of Object.values(poseData.joints)) {
+                xData.push(joint.x);
+                yData.push(joint.y);
+                zData.push(joint.z || 0);
+            }
 
             return [{
                 x: xData,
