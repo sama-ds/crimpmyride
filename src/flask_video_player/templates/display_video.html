@@ -120,7 +120,9 @@
             <div id="model-canvas"></div>
         </div>
         <div id="z-box"></div>
-        <div id="graph-box"></div>
+        <div id="graph-box">
+            {{ plot | safe }} <!-- Embed Plotly graph here -->
+        </div>
         <div id="frame-progress-container">
             <input type="range" id="frame-progress" min="0" value="0">
         </div>
@@ -130,6 +132,7 @@
             const video = document.getElementById('video');
             const canvas = document.getElementById('overlay');
             const modelCanvas = document.getElementById('model-canvas');
+            const graphBox = document.getElementById('graph-box');
             const ctx = canvas.getContext('2d');
             const dataFilename = "{{ url_for('get_json', filename=data_filename) }}";
             const frameProgress = document.getElementById('frame-progress');
@@ -149,7 +152,7 @@
                 .catch(error => {
                     console.error('Error fetching pose data:', error);
                 });
-
+            
             // Function to resize and position the canvas to match the video dimensions
             function resizeCanvas() {
                 const rect = video.getBoundingClientRect();
@@ -175,52 +178,6 @@
                     requestAnimationFrame(draw);
                 }
             }
-            
-            function createBigDot() {
-                const bigDot = document.createElement('div');
-                bigDot.classList.add('big-dot'); // Optionally, you can add a class for styling
-
-                // Styling the dot
-                const dotSize = 50; // Adjust size as needed
-                bigDot.style.width = `${dotSize}px`;
-                bigDot.style.height = `${dotSize}px`;
-                bigDot.style.borderRadius = '50%';
-                bigDot.style.backgroundColor = 'blue';
-                bigDot.style.position = 'absolute';
-
-                // Calculate initial position to center the dot within model-canvas
-                const canvasWidth = modelCanvas.clientWidth;
-                const canvasHeight = modelCanvas.clientHeight;
-                const initialLeft = (canvasWidth - dotSize) / 2;
-                const initialTop = (canvasHeight - dotSize) / 2;
-
-                bigDot.style.left = `${initialLeft}px`;
-                bigDot.style.top = `${initialTop}px`;
-
-                // Append the dot to model-canvas
-                modelCanvas.appendChild(bigDot);
-
-                return bigDot;
-            }
-
-            const bigDot = createBigDot();
-
-            // // Example: Function to update dot position dynamically
-            // function updateDotPosition(x, y) {
-            //     bigDot.style.top = y + 'px';
-            //     bigDot.style.left = x + 'px';
-            // }
-
-            // // Example: Update dot position based on some condition or event
-            // function updateDotBasedOnEvent() {
-            //     const x = Math.random() * modelCanvas.clientWidth;
-            //     const y = Math.random() * modelCanvas.clientHeight;
-
-            //     updateDotPosition(x, y);
-            // }
-
-            // // Example: Update dot position initially or based on events
-            // updateDotBasedOnEvent();
 
             function getPoseDataForTime(time) {
                 // Find the frame data closest to the current video time
@@ -301,6 +258,7 @@
             // Initial resize to match video dimensions
             resizeCanvas();
             requestAnimationFrame(draw);
+
         });
     </script>
 </body>
