@@ -89,41 +89,6 @@ def process_video(video_path):
     return results_data
 
 
-# def process_video_frame(frame_index):
-#     """Extract shoulder data from the video frame at the specified index."""
-#     cap = cv2.VideoCapture(video_path)
-#     if not cap.isOpened():
-#         return {"error": "Could not open video"}
-
-#     with mp_pose.Pose(
-#         min_detection_confidence=0.5, min_tracking_confidence=0.5
-#     ) as pose:
-#         cap.set(
-#             cv2.CAP_PROP_POS_FRAMES, frame_index
-#         )  # Seek to the specified frame index
-#         success, frame = cap.read()
-#         if not success:
-#             return {"error": "Could not read frame"}
-
-#         # Convert the BGR image to RGB.
-#         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-#         image.flags.writeable = False
-
-#         # Process the image and find the pose
-#         results = pose.process(image)
-
-#         if results.pose_landmarks:
-#             # Extract coordinates
-#             joints = extract_joints(results.pose_landmarks)
-#             lines = extract_lines(joints)
-#             frame_data = {"frame": frame_index, "joints": joints, "lines": lines}
-#             return frame_data
-#         else:
-#             return {"error": "No pose landmarks found"}
-
-#     cap.release()
-
-
 def extract_joints(landmarks):
     joints = {
         "left_shoulder": extract_joint_loc(
@@ -190,51 +155,6 @@ def uploaded_file(filename):
 def get_json(filename):
     print("get_json triggered")
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
-
-# Update your Flask route to render the HTML template
-# @app.route("/display_processed_video/<filename>/<data_filename>")
-# def display_processed_video(filename, data_filename):
-#    return render_template(
-#        "processed_video.html", video_filename=filename, data_filename=data_filename
-#    )
-
-
-# # Flask route for fetching frame data
-# @app.route("/frame_data/<int:frame_index>")
-# def get_frame_data(frame_index):
-#     print("get_frame_data triggered")
-#     # Process the video frame at the specified index and return the frame data as JSON
-#     frame_data = process_video_frame(frame_index)
-#     return jsonify(frame_data)
-
-
-@app.route("/display/<filename>/<data_filename>")
-def display_graph(filename, data_filename):
-    print("display_graph triggered")
-    # Example data for 3D scatter plot
-    trace = go.Scatter3d(
-        x=[1, 2, 3],
-        y=[4, 5, 6],
-        z=[7, 8, 9],
-        mode="markers",
-        marker=dict(size=12, color="rgb(0, 0, 0)", opacity=0.8),
-    )
-    layout = go.Layout(
-        scene=dict(
-            xaxis_title="X AXIS TITLE",
-            yaxis_title="Y AXIS TITLE",
-            zaxis_title="Z AXIS TITLE",
-        )
-    )
-    fig = go.Figure(data=[trace], layout=layout)
-    # Convert Plotly figure to HTML
-    plot_html = fig.to_html(full_html=False)
-
-    # Print or log the HTML to inspect
-    print("Generated Plotly HTML:", plot_html)
-
-    return render_template("display_graph.html", plot=fig.to_html(full_html=False))
 
 
 if __name__ == "__main__":
