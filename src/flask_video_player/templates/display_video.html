@@ -52,11 +52,14 @@
             z-index: 5; /* Ensure it's above other elements */
         }
         #model-canvas {
-            /* Styles for the canvas */
             width: 100%;
             height: 100%;
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+
         #z-box {
             width: 300px; /* Adjust width as needed */
             height: 100%; /* Match canvas height */
@@ -103,7 +106,35 @@
             background: #4CAF50;
             cursor: pointer;
         }
-        
+        .person {
+            position: absolute;
+            transform-origin: top left;
+        }
+
+        .head {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #333;
+        }
+
+        .body {
+            width: 20px;
+            height: 100px;
+            background-color: #666;
+        }
+
+        .arm {
+            width: 10px;
+            height: 40px;
+            background-color: #999;
+        }
+
+        .leg {
+            width: 10px;
+            height: 60px;
+            background-color: #999;
+        }
     </style>
 </head>
 <body>
@@ -176,6 +207,129 @@
                 }
             }
             
+            function createPersonModel() {
+                const personModel = document.createElement('div');
+                personModel.classList.add('person');
+
+                // Create torso (body)
+                const body = document.createElement('div');
+                body.classList.add('body');
+                personModel.appendChild(body);
+
+                // Create head
+                const head = document.createElement('div');
+                head.classList.add('head');
+                personModel.appendChild(head);
+
+                // Create left upper arm and lower arm
+                const leftUpperArm = createArm();
+                const leftLowerArm = createArm();
+                personModel.appendChild(leftUpperArm);
+                personModel.appendChild(leftLowerArm);
+                positionLeftArm(leftUpperArm, leftLowerArm, body);
+
+                // Create right upper arm and lower arm (mirrored)
+                const rightUpperArm = createArm();
+                const rightLowerArm = createArm();
+                personModel.appendChild(rightUpperArm);
+                personModel.appendChild(rightLowerArm);
+                positionRightArm(rightUpperArm, rightLowerArm, body);
+
+                // Create left upper leg and lower leg
+                const leftUpperLeg = createLeg();
+                const leftLowerLeg = createLeg();
+                personModel.appendChild(leftUpperLeg);
+                personModel.appendChild(leftLowerLeg);
+                positionLeftLeg(leftUpperLeg, leftLowerLeg, body);
+
+                // Create right upper leg and lower leg (mirrored)
+                const rightUpperLeg = createLeg();
+                const rightLowerLeg = createLeg();
+                personModel.appendChild(rightUpperLeg);
+                personModel.appendChild(rightLowerLeg);
+                positionRightLeg(rightUpperLeg, rightLowerLeg, body);
+
+                // Append personModel to modelCanvas
+                modelCanvas.appendChild(personModel);
+
+                return personModel;
+            }
+
+            function createArm() {
+                const arm = document.createElement('div');
+                arm.classList.add('arm');
+                return arm;
+            }
+
+            function createLeg() {
+                const leg = document.createElement('div');
+                leg.classList.add('leg');
+                return leg;
+            }
+
+            function positionLeftArm(upperArm, lowerArm, body) {
+                const armLength = 60; // Adjust arm length as needed
+                const armWidth = 10; // Adjust arm width as needed
+
+                // Position upper arm (shoulder)
+                upperArm.style.top = `20px`; // Adjust distance from top of body
+                upperArm.style.left = `calc(50% - ${armWidth / 2}px)`; // Centered horizontally
+                upperArm.style.width = `${armWidth}px`;
+
+                // Position lower arm (elbow to wrist)
+                lowerArm.style.top = `${armLength}px`; // Adjust arm length
+                lowerArm.style.left = `calc(50% - ${armWidth / 2}px)`; // Centered horizontally
+                lowerArm.style.width = `${armWidth}px`;
+            }
+
+            function positionRightArm(upperArm, lowerArm, body) {
+                const armLength = 60; // Adjust arm length as needed
+                const armWidth = 10; // Adjust arm width as needed
+
+                // Position upper arm (shoulder)
+                upperArm.style.top = `20px`; // Adjust distance from top of body
+                upperArm.style.right = `calc(50% - ${armWidth / 2}px)`; // Centered horizontally
+                upperArm.style.width = `${armWidth}px`;
+
+                // Position lower arm (elbow to wrist)
+                lowerArm.style.top = `${armLength}px`; // Adjust arm length
+                lowerArm.style.right = `calc(50% - ${armWidth / 2}px)`; // Centered horizontally
+                lowerArm.style.width = `${armWidth}px`;
+            }
+
+            function positionLeftLeg(upperLeg, lowerLeg, body) {
+                const legLength = 80; // Adjust leg length as needed
+                const legWidth = 15; // Adjust leg width as needed
+
+                // Position upper leg (hip to knee)
+                upperLeg.style.top = `calc(100% - ${legLength}px)`; // Adjust distance from top of body
+                upperLeg.style.left = `calc(50% - ${legWidth / 2}px)`; // Centered horizontally
+                upperLeg.style.width = `${legWidth}px`;
+
+                // Position lower leg (knee to ankle)
+                lowerLeg.style.top = `${legLength}px`; // Adjust leg length
+                lowerLeg.style.left = `calc(50% - ${legWidth / 2}px)`; // Centered horizontally
+                lowerLeg.style.width = `${legWidth}px`;
+            }
+
+            function positionRightLeg(upperLeg, lowerLeg, body) {
+                const legLength = 80; // Adjust leg length as needed
+                const legWidth = 15; // Adjust leg width as needed
+
+                // Position upper leg (hip to knee)
+                upperLeg.style.top = `calc(100% - ${legLength}px)`; // Adjust distance from top of body
+                upperLeg.style.right = `calc(50% - ${legWidth / 2}px)`; // Centered horizontally
+                upperLeg.style.width = `${legWidth}px`;
+
+                // Position lower leg (knee to ankle)
+                lowerLeg.style.top = `${legLength}px`; // Adjust leg length
+                lowerLeg.style.right = `calc(50% - ${legWidth / 2}px)`; // Centered horizontally
+                lowerLeg.style.width = `${legWidth}px`;
+            }
+
+            // Example: Create the person model
+            const personModel = createPersonModel();
+
             function createBigDot() {
                 const bigDot = document.createElement('div');
                 bigDot.classList.add('big-dot'); // Optionally, you can add a class for styling
