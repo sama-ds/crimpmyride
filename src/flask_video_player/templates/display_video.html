@@ -132,8 +132,6 @@
         document.addEventListener("DOMContentLoaded", function() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('overlay');
-            const modelCanvas = document.getElementById('model-canvas');
-            const graphBox = document.getElementById('graph-box');
             const ctx = canvas.getContext('2d');
             const dataFilename = "{{ url_for('get_json', filename=data_filename) }}";
             const frameProgress = document.getElementById('frame-progress');
@@ -239,6 +237,14 @@
                 const currentFrameData = getPoseDataForTime(currentTime);
                 if (currentFrameData) {
                     drawPose(currentFrameData);
+                    // Prepare 3D data for Plotly and update the graph
+                    const plotlyData = prepare3DData(currentFrameData);
+                    const update = {
+                        x: [plotlyData[0].x], // Update x data
+                        y: [plotlyData[0].y], // Update y data
+                        z: [plotlyData[0].z]  // Update z data
+                    };
+                    Plotly.update('plotly-graph', update); // Update the Plotly graph data
                 }
             }
 
@@ -261,39 +267,27 @@
             requestAnimationFrame(draw);
 
         });
-        document.addEventListener("DOMContentLoaded", function() {
-            // Mock data for Plotly graph (replace with your actual data)
-            const mockData = [{
-                x: [1, 2, 3, 4, 5],
-                y: [10, 15, 13, 17, 12],
-                z: [5, 8, 6, 9, 10],
+
+        // Mock function, replace with your actual implementation
+        function prepare3DData(poseData) {
+            // Replace this with your actual implementation to generate Plotly data
+            // Example data (replace with your actual data structure)
+            const xData = [1, 2, 3];
+            const yData = [4, 5, 6];
+            const zData = [7, 8, 9];
+
+            return [{
+                x: xData,
+                y: yData,
+                z: zData,
                 mode: 'markers',
                 type: 'scatter3d',
                 marker: {
-                    size: 5,
-                    color: 'rgb(50, 205, 50)',
-                    symbol: 'circle'
+                    size: 12,
+                    opacity: 0.8
                 }
             }];
-            
-            // Layout options for Plotly graph
-            const layout = {
-                title: '3D Scatter Plot',
-                scene: {
-                    xaxis: { title: 'X-axis Label' },
-                    yaxis: { title: 'Y-axis Label' },
-                    zaxis: { title: 'Z-axis Label' },
-                    camera: {
-                        eye: { x: 1.2, y: 1.2, z: 1.2 },
-                        center: { x: 0, y: 0, z: 0 },
-                        up: { x: 0, y: 0, z: 1 }
-                    }
-                }
-            };
-
-            // Render the Plotly graph inside the plotly-graph div
-            Plotly.newPlot('plotly-graph', mockData, layout);
-        });
+        }
     </script>
 </body>
 </html>
