@@ -259,12 +259,7 @@
                 if (currentFrameData) {
                     drawPose(currentFrameData);
                     const plotlyData = prepare3DData(currentFrameData);
-                    const update = {
-                        'x': [plotlyData[0].x],
-                        'y': [plotlyData[0].y],
-                        'z': [plotlyData[0].z]
-                    };
-                    Plotly.react(plotlyGraph, update);
+                    Plotly.react(plotlyGraph, plotlyData, plotlyGraph.layout);
                 }
             }
 
