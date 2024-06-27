@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 import cv2
 import mediapipe as mp
 import json
+import math
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
@@ -48,6 +49,61 @@ def index():
     return render_template("index.html")
 
 
+def calculate_angle(point1, center, point2):
+    """
+    Calculate the angle (in radians) between three points.
+
+    Parameters:
+    - point1, point2: Dictionaries with 'x' and 'y' coordinates of the points.
+    - center: Dictionary with 'x' and 'y' coordinates of the center point.
+
+    Returns:
+    - Angle in radians between the vectors formed by (center, point1) and (center, point2).
+    """
+    vector1 = (point1["x"] - center["x"], point1["y"] - center["y"])
+    vector2 = (point2["x"] - center["x"], point2["y"] - center["y"])
+
+    dot_product = vector1[0] * vector2[0] + vector1[1] * vector2[1]
+    magnitude1 = (vector1[0] ** 2 + vector1[1] ** 2) ** 0.5
+    magnitude2 = (vector2[0] ** 2 + vector2[1] ** 2) ** 0.5
+
+    if magnitude1 * magnitude2 == 0:
+        return 0  # Avoid division by zero
+
+    cos_theta = dot_product / (magnitude1 * magnitude2)
+    angle_rad = max(-1.0, min(1.0, cos_theta))  # Ensure cos_theta is within [-1, 1]
+    angle_rad = math.acos(angle_rad)
+
+    return angle_rad
+
+
+def extract_angles(joints):
+    """
+    Extract angles between specific joints.
+
+    Parameters:
+    - joints: Dictionary containing joint positions extracted from pose landmarks.
+
+    Returns:
+    - Dictionary with angle measurements between specified joints.
+    """
+    angles = {
+        "upper_arm_torso": calculate_angle(
+            joints["left_shoulder"], joints["left_elbow"], joints["left_wrist"]
+        ),
+        "upper_arm_lower_arm": calculate_angle(
+            joints["left_shoulder"], joints["left_elbow"], joints["left_wrist"]
+        ),
+        "upper_leg_torso": calculate_angle(
+            joints["left_shoulder"], joints["left_elbow"], joints["left_wrist"]
+        ),
+        "upper_leg_lower_leg": calculate_angle(
+            joints["left_shoulder"], joints["left_elbow"], joints["left_wrist"]
+        ),
+    }
+    return angles
+
+
 def process_video(video_path):
     """Extract shoulder data from the video."""
     cap = cv2.VideoCapture(video_path)
@@ -75,11 +131,16 @@ def process_video(video_path):
                 # Extract coordinates
                 joints = extract_joints(results.pose_landmarks)
                 lines = extract_lines(joints)
+
+                # Calculate angles
+                angles = extract_angles(joints)
+
                 frame_data = {
                     "timestamp": cap.get(cv2.CAP_PROP_POS_MSEC),
                     "frame": frame_idx,
                     "joints": joints,
                     "lines": lines,
+                    "angles": angles,
                 }
                 results_data.append(frame_data)
 

@@ -13,18 +13,27 @@
             color: #333;
             text-align: center;
         }
-        .video-container {
-            max-width: 800px;
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            max-width: 1200px;
             margin: auto;
             background: white;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            position: relative;
             border: 5px solid blue;
         }
-        .video-wrapper {
+        .video-container {
             position: relative;
+            width: 70%;
             padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        }
+        .model-container {
+            position: relative;
+            width: 30%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            margin-left: 20px;
         }
         video, canvas {
             position: absolute;
@@ -37,14 +46,18 @@
             border: 5px solid yellow;
             z-index: 1;
         }
-        canvas {
+        canvas#overlay {
             pointer-events: none;
-            border: 5px solid green;
             z-index: 2;
+            border: 5px solid green;
+        }
+        canvas#model-figure {
+            border: 5px solid red;
         }
         #frame-progress-container {
             margin-top: 20px;
             width: 100%;
+            clear: both;
         }
         #frame-progress {
             width: 100%;
@@ -73,24 +86,29 @@
     </style>
 </head>
 <body>
-    <div class="video-container">
-        <h1>Processed Video Display</h1>
-        <div class="video-wrapper">
+    <h1>Processed Video Display</h1>
+    <div class="container">
+        <div class="video-container">
             <video id="video" controls>
                 <source src="{{ url_for('uploaded_file', filename=video_filename) }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             <canvas id="overlay"></canvas>
         </div>
-        <div id="frame-progress-container">
-            <input type="range" id="frame-progress" min="0" value="0">
+        <div class="model-container">
+            <canvas id="model-figure"></canvas>
         </div>
+    </div>
+    <div id="frame-progress-container">
+        <input type="range" id="frame-progress" min="0" value="0">
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const video = document.getElementById('video');
-            const canvas = document.getElementById('overlay');
-            const ctx = canvas.getContext('2d');
+            const overlayCanvas = document.getElementById('overlay');
+            const modelCanvas = document.getElementById('model-figure');
+            const overlayCtx = overlayCanvas.getContext('2d');
+            const modelCtx = modelCanvas.getContext('2d');
             const dataFilename = "{{ url_for('get_json', filename=data_filename) }}";
             const frameProgress = document.getElementById('frame-progress');
 
@@ -112,9 +130,12 @@
 
             // Function to resize and position the canvas to match the video dimensions
             function resizeCanvas() {
-                const rect = video.getBoundingClientRect();
-                canvas.width = rect.width;
-                canvas.height = rect.height;
+                const videoRect = video.getBoundingClientRect();
+                const modelRect = modelCanvas.getBoundingClientRect();
+                overlayCanvas.width = videoRect.width;
+                overlayCanvas.height = videoRect.height;
+                modelCanvas.width = modelRect.width;
+                modelCanvas.height = modelRect.height;
             }
 
             // Resize canvas when video metadata is loaded and when the window is resized
@@ -126,11 +147,13 @@
 
             function draw() {
                 if (!video.paused && !video.ended) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                    modelCtx.clearRect(0, 0, modelCanvas.width, modelCanvas.height);
                     const currentTime = video.currentTime * 1000; // Current time in milliseconds
                     const currentFrameData = getPoseDataForTime(currentTime);
                     if (currentFrameData) {
                         drawPose(currentFrameData);
+                        drawModel(currentFrameData);
                     }
                     requestAnimationFrame(draw);
                 }
@@ -145,44 +168,78 @@
                 return poseData[frameIndex];
             }
 
-            function drawJoints(joints) {
+            function drawJoints(joints, ctx) {
                 ctx.fillStyle = 'red';
                 for (const jointName in joints) {
                     const joint = joints[jointName];
-                    const x = joint['x'] * canvas.width;
-                    const y = joint['y'] * canvas.height;
-                    drawPoint(x, y);
+                    const x = joint['x'] * ctx.canvas.width;
+                    const y = joint['y'] * ctx.canvas.height;
+                    drawPoint(x, y, ctx);
                 }
             }
 
-            function drawConnections(joints, lines) {
+            function drawConnections(joints, lines, ctx) {
                 ctx.strokeStyle = 'blue';
                 ctx.lineWidth = 2;
                 for (const line of lines) {
                     const startJoint = joints[line['start']];
                     const endJoint = joints[line['end']];
-                    const startX = startJoint['x'] * canvas.width;
-                    const startY = startJoint['y'] * canvas.height;
-                    const endX = endJoint['x'] * canvas.width;
-                    const endY = endJoint['y'] * canvas.height;
-                    drawLine(startX, startY, endX, endY);
+                    const startX = startJoint['x'] * ctx.canvas.width;
+                    const startY = startJoint['y'] * ctx.canvas.height;
+                    const endX = endJoint['x'] * ctx.canvas.width;
+                    const endY = endJoint['y'] * ctx.canvas.height;
+                    drawLine(startX, startY, endX, endY, ctx);
                 }
             }
 
             function drawPose(pose) {
                 const joints = pose['joints'];
                 const lines = pose['lines'];
-                drawJoints(joints);
-                drawConnections(joints, lines);
+                drawJoints(joints, overlayCtx);
+                drawConnections(joints, lines, overlayCtx);
             }
 
-            function drawPoint(x, y) {
+            function drawModel(pose) {
+                const modelJoints = pose['angles']; // Use pre-calculated angles from pose data
+                const lines = pose['lines'];
+
+                const torsoCenter = { x: 0.5, y: 0.5 }; // Center of the model figure
+
+                const modelJointsPos = {
+                    left_shoulder: { x: torsoCenter.x - 0.1, y: torsoCenter.y - 0.1 },
+                    right_shoulder: { x: torsoCenter.x + 0.1, y: torsoCenter.y - 0.1 },
+                    left_hip: { x: torsoCenter.x - 0.1, y: torsoCenter.y + 0.1 },
+                    right_hip: { x: torsoCenter.x + 0.1, y: torsoCenter.y + 0.1 },
+                    left_elbow: calculateJointPosition(torsoCenter, modelJoints.left_shoulder, modelJoints.left_elbow, 'left'),
+                    right_elbow: calculateJointPosition(torsoCenter, modelJoints.right_shoulder, modelJoints.right_elbow, 'right'),
+                    left_wrist: calculateJointPosition(torsoCenter, modelJoints.left_elbow, modelJoints.left_wrist, 'left'),
+                    right_wrist: calculateJointPosition(torsoCenter, modelJoints.right_elbow, modelJoints.right_wrist, 'right'),
+                    left_knee: calculateJointPosition(torsoCenter, modelJoints.left_hip, modelJoints.left_knee, 'left'),
+                    right_knee: calculateJointPosition(torsoCenter, modelJoints.right_hip, modelJoints.right_knee, 'right'),
+                    left_ankle: calculateJointPosition(torsoCenter, modelJoints.left_knee, modelJoints.left_ankle, 'left'),
+                    right_ankle: calculateJointPosition(torsoCenter, modelJoints.right_knee, modelJoints.right_ankle, 'right'),
+                };
+
+                modelCtx.fillStyle = 'black';
+                drawJoints(modelJointsPos, modelCtx);
+                drawConnections(modelJointsPos, lines, modelCtx);
+            }
+
+            function calculateJointPosition(torsoCenter, startJoint, endJoint, side) {
+                const length = 0.2; // Arbitrary length for limbs in the model figure
+                const angle = Math.atan2(endJoint.y - startJoint.y, endJoint.x - startJoint.x);
+                const x = torsoCenter.x + length * Math.cos(angle);
+                const y = torsoCenter.y + length * Math.sin(angle);
+                return { x: x, y: y };
+            }
+
+            function drawPoint(x, y, ctx) {
                 ctx.beginPath();
                 ctx.arc(x, y, 5, 0, 2 * Math.PI);
                 ctx.fill();
             }
 
-            function drawLine(x1, y1, x2, y2) {
+            function drawLine(x1, y1, x2, y2, ctx) {
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
@@ -190,11 +247,13 @@
             }
 
             function updatePose() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                modelCtx.clearRect(0, 0, modelCanvas.width, modelCanvas.height);
                 const currentTime = video.currentTime * 1000; // Current time in milliseconds
                 const currentFrameData = getPoseDataForTime(currentTime);
                 if (currentFrameData) {
                     drawPose(currentFrameData);
+                    drawModel(currentFrameData);
                 }
             }
 
