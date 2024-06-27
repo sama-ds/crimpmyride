@@ -147,19 +147,19 @@
                     frameCount = data.length;
                     frameProgress.max = frameCount - 1;
 
-                    // Calculate ranges from poseData
-                    poseData.forEach(frame => {
-                        Object.values(frame.joints).forEach(joint => {
-                            if (joint.x < xRange[0]) xRange[0] = joint.x;
-                            if (joint.x > xRange[1]) xRange[1] = joint.x;
-                            if (joint.y < yRange[0]) yRange[0] = joint.y;
-                            if (joint.y > yRange[1]) yRange[1] = joint.y;
-                            if (joint.z < zRange[0]) zRange[0] = joint.z;
-                            if (joint.z > zRange[1]) zRange[1] = joint.z;
-                        });
-                    });
+                    // // Calculate ranges from poseData
+                    // poseData.forEach(frame => {
+                    //     Object.values(frame.joints).forEach(joint => {
+                    //         if (joint.x < xRange[0]) xRange[0] = joint.x;
+                    //         if (joint.x > xRange[1]) xRange[1] = joint.x;
+                    //         if (joint.y < yRange[0]) yRange[0] = joint.y;
+                    //         if (joint.y > yRange[1]) yRange[1] = joint.y;
+                    //         if (joint.z < zRange[0]) zRange[0] = joint.z;
+                    //         if (joint.z > zRange[1]) zRange[1] = joint.z;
+                    //     });
+                    // });
 
-                    initializePlot(xRange = 10, yRange = 10, zRange = 10); // Call initializePlot with ranges
+                    initializePlot(xRange = [0,1], yRange = [0,1], zRange = [0,1]); // Call initializePlot with ranges
                 })
                 .catch(error => {
                     console.error('Error fetching pose data:', error);
@@ -250,6 +250,7 @@
                 const layout = {
                     title: '3D Pose Visualization',
                     autoscale: false,
+                    autosize: false,
                     scene: {
                         xaxis: { title: 'X-axis', autorange: false, range: [0, 1], fixedrange: true },
                         yaxis: { title: 'Y-axis', autorange: false, range: [0, 1], fixedrange: true },
