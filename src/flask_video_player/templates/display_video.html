@@ -14,12 +14,12 @@
             text-align: center;
         }
         .video-container {
+            position: relative; /* Make container relative for absolute positioning inside */
             max-width: 800px;
             margin: auto;
             background: white;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            position: relative;
             border: 5px solid blue;
         }
         .video-wrapper {
@@ -41,6 +41,33 @@
             pointer-events: none;
             border: 5px solid green;
             z-index: 2;
+        }
+        #model-box {
+            width: 300px; /* Adjust width as needed */
+            height: 100%; /* Match canvas height */
+            position: absolute;
+            top: 0;
+            left: calc(100% + 20px); /* Position to the right of the video container */
+            border: 5px solid red; /* Red border */
+            z-index: 3; /* Ensure it's above other elements */
+        }
+        #z-box {
+            width: 300px; /* Adjust width as needed */
+            height: 100%; /* Match canvas height */
+            position: absolute;
+            top: 0;
+            right: calc(100% + 20px); /* Position to the left of the video container */
+            border: 5px solid orange; /* Orange border */
+            z-index: 3; /* Ensure it's above other elements */
+        }
+        #graph-box {
+            width: 100%; /* Adjust width as needed */
+            height: 300px; /* Match canvas height */
+            position: absolute;
+            top: calc(100% + 20px);
+            left: 0; 
+            border: 5px solid purple; /* purple border */
+            z-index: 3; /* Ensure it's above other elements */
         }
         #frame-progress-container {
             margin-top: 20px;
@@ -82,6 +109,9 @@
             </video>
             <canvas id="overlay"></canvas>
         </div>
+        <div id="model-box"></div> 
+        <div id="z-box"></div>
+        <div id="graph-box"></div>
         <div id="frame-progress-container">
             <input type="range" id="frame-progress" min="0" value="0">
         </div>
