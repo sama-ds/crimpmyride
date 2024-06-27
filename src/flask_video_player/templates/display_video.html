@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <title>Watch Processed Video</title>
     <style>
         body {
@@ -121,7 +122,7 @@
         </div>
         <div id="z-box"></div>
         <div id="graph-box">
-            {{ plot | safe }} <!-- Embed Plotly graph here -->
+            <div id="plotly-graph"></div>
         </div>
         <div id="frame-progress-container">
             <input type="range" id="frame-progress" min="0" value="0">
@@ -259,6 +260,39 @@
             resizeCanvas();
             requestAnimationFrame(draw);
 
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            // Mock data for Plotly graph (replace with your actual data)
+            const mockData = [{
+                x: [1, 2, 3, 4, 5],
+                y: [10, 15, 13, 17, 12],
+                z: [5, 8, 6, 9, 10],
+                mode: 'markers',
+                type: 'scatter3d',
+                marker: {
+                    size: 5,
+                    color: 'rgb(50, 205, 50)',
+                    symbol: 'circle'
+                }
+            }];
+            
+            // Layout options for Plotly graph
+            const layout = {
+                title: '3D Scatter Plot',
+                scene: {
+                    xaxis: { title: 'X-axis Label' },
+                    yaxis: { title: 'Y-axis Label' },
+                    zaxis: { title: 'Z-axis Label' },
+                    camera: {
+                        eye: { x: 1.2, y: 1.2, z: 1.2 },
+                        center: { x: 0, y: 0, z: 0 },
+                        up: { x: 0, y: 0, z: 1 }
+                    }
+                }
+            };
+
+            // Render the Plotly graph inside the plotly-graph div
+            Plotly.newPlot('plotly-graph', mockData, layout);
         });
     </script>
 </body>
